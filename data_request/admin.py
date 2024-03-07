@@ -111,23 +111,25 @@ class DataRequestAdmin(TranslationAdmin):
 
     def save_model(self, request: Any, obj: Any, form: Any, change: Any) -> None:
         obj.published_data.set(form.cleaned_data.get("published_data"))
-        if obj.status == "under_review" and not obj.date_under_review:
-            obj.date_under_review = timezone.now()
-            # send email updating user that it is now under review
-            self.send_subscribtion_emails(
-                obj=obj,
-                template=self.DATA_REQUEST_UNDER_REVIEW_TEMPLATE,
-                context={"name": obj.subscription_set.first().name},
-            )
-            # send email to agency to request for review
-            with translation.override("ms"):
-                context = DataRequestSerializer(obj).data
-                mail.send(
-                    recipients=obj.agency.emails,
-                    template=self.DATA_REQUEST_AGENCY_NOTIFICATION_TEMPLATE,
-                    language="ms",
-                    context=context,
+        if obj.status == "under_review":
+            if not obj.date_under_review:
+                obj.date_under_review = timezone.now()
+                # send email updating user that it is now under review
+                self.send_subscribtion_emails(
+                    obj=obj,
+                    template=self.DATA_REQUEST_UNDER_REVIEW_TEMPLATE,
+                    context={"name": obj.subscription_set.first().name},
                 )
+            if "agency" in form.changed_data or not obj.date_under_review:
+                with translation.override("ms"):
+                    context = DataRequestSerializer(obj).data
+                    mail.send(
+                        recipients=obj.agency.emails,
+                        template=self.DATA_REQUEST_AGENCY_NOTIFICATION_TEMPLATE,
+                        language="ms",
+                        context=context,
+                    )
+
         elif obj.status in ["rejected", "data_published"]:
             obj.date_completed = timezone.now()
         super().save_model(request, obj, form, change)
