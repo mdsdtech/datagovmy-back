@@ -66,6 +66,8 @@ class CarPopularityExplorer(General_Explorer):
 
         # compile timeseries chart data based on car params
         cars = request_params.get("car", [])
+        cars = [int(val) for val in cars if val.isdigit()]
+
         if not cars:
             return JsonResponse(
                 {
