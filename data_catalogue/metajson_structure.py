@@ -67,6 +67,7 @@ class DataCatalogueValidateModel(BaseModel):
     dataset_begin: int
     dataset_end: int
     data_source: list[str]
+    data_source_granular: list[str] = []
     fields: list[Field] = []
     # table: Table
     dataviz: list[Dataviz] = []  # TODO: table @ dataviz[0] enforced
